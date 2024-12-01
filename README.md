@@ -15,3 +15,10 @@ python -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 ```
+
+## Start
+
+1. Go to folder `ROOT_PROJECT/smart-contract`, then run:
+```shell
+opshin build hello.py
+```
