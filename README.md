@@ -1,6 +1,5 @@
 # Web based Crypto Wallet
-
-Web-based crypto wallet.
+Web based crypto wallet.
 
 ## Setup
 1. Clone this repository to your local machine.
@@ -16,9 +15,36 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-## Start
-
-1. Go to folder `ROOT_PROJECT/smart-contract`, then run:
+5. Generate `secret_key`:
 ```shell
-opshin build hello.py
+python -c 'import secrets; print(secrets.token_hex())'
 ```
+
+6. Create new file `.env` with content:
+```shell
+SECRET_KEY=secret_key
+```
+
+7. Go to folder `ROOT_PROJECT/frontend`, then run:
+```shell
+npm install
+```
+
+## Start
+1. Go to folder `ROOT_PROJECT/frontend`, then run:
+```shell
+npm run start
+```
+
+Leave it open `ROOT_PROJECT/frontend`, then run:
+```shell
+python wsgi.py
+```
+
+2. Go to folder 
+
+## Future Feature
+- Deploy on cloud (BizFly Cloud, Clearsky, etc.) for production.
+- Expand features (logging, etc.), make it become full fledged wallet.
+- Integrate multi chain for cross chain transaction.
+- Develop ecosystem: Layer-2, Payment Gateway, etc.
