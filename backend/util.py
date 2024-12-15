@@ -24,6 +24,7 @@ def random_str(n: int, chars: str = '0123456789') -> str:
 
 
 def check_pass(password: str, hashed: str) -> bool:
+    password, hashed = str_to_byte(password, hashed)
     return bcrypt.checkpw(password, hashed)
 
 
