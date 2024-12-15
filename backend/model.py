@@ -71,6 +71,8 @@ class Activate(Base):
 
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'))
     code: Mapped[str] = mapped_column(String(8))
+    till: Mapped[datetime]
+    actived: Mapped[bool] = mapped_column(default=False)
     user: Mapped['User'] = relationship()
 
     def __str__(self) -> str:
