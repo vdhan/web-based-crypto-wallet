@@ -1,7 +1,8 @@
 from flask import Response, jsonify, request
 
 from model import User, db
-from util import is_email
+from util import add_wallet, is_email
+from wsgi import app
 
 
 def signup() -> Response:
@@ -37,23 +38,26 @@ def signup() -> Response:
 
         return jsonify(res), 400
 
-    result = db.session.query(User).filter_by(email=email).first()
-    # TODO: check if deleted
-    if result:
+    user = db.session.query(User).filter_by(email=email).first()
+    if user and user.deleted is False:
         res = {
             'msg': 'Email existed'
         }
 
         return jsonify(res), 400
+    elif user and user.deleted is True:
+        user.deleted = False
+    else:
+        user = User(email=email, password=pwd)
+        wallet = add_wallet(pwd, app.config['SECRET_KEY'], chain_id=2, user=user)
+        db.session.add(user)
+        db.session.add(wallet)
 
-    # TODO: active and create wallet separately
-    user = User(email=email, password=pwd)
-    db.session.add(user)
     db.session.commit()
-
     res = {
         'id': user.id,
-        'email': email
+        'email': email,
+        'address': wallet.address
     }
 
     return jsonify(res)

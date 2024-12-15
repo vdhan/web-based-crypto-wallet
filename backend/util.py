@@ -5,6 +5,10 @@ import secrets
 
 import bcrypt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from mnemonic import Mnemonic
+from pycardano import Address, HDWallet, Network, PaymentSigningKey, PaymentVerificationKey
+
+from model import Wallet
 
 
 def is_email(email: str) -> bool:
@@ -54,3 +58,25 @@ def decrypt(data: str, password: str, salt: str, tag: str) -> str:
     decryptor = Cipher(algorithms.AES(key), modes.GCM(nonce, tag)).decryptor()
     plain = decryptor.update(cipher) + decryptor.finalize()
     return plain.decode()
+
+
+def gen_mnemonic() -> str:
+    nemo = Mnemonic()
+    return nemo.generate()
+
+
+def gen_address(nemo: str) -> str:
+    path = "m/1852'/1815'/0'/0/0"
+    hdwallet = HDWallet.from_mnemonic(nemo)
+    spend = hdwallet.derive_from_path(path)
+    sign_key: PaymentSigningKey = PaymentSigningKey.from_primitive(spend.public_key)
+    verify_key = PaymentVerificationKey.from_signing_key(sign_key)
+    address = Address(verify_key.hash(), network=Network.TESTNET)
+    return address.encode()
+
+
+def add_wallet(password: str, salt: str, **kw) -> Wallet:
+    nemo = gen_mnemonic()
+    address = gen_address(nemo)
+    nemo, tag = encrypt(nemo, password, salt)
+    return Wallet(address=address, mnemonic=nemo, tag=tag, **kw)
