@@ -7,18 +7,18 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from ulid import ULID
 
 
-def generate_ulid() -> str:
+def gen_ulid() -> str:
     return str(ULID())
 
 
-def hash_password(password: str) -> str:
+def hash_pass(password: str) -> str:
     byte = password.encode()
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(byte, salt).decode()
 
 
 class Base(DeclarativeBase):
-    id: Mapped[str] = mapped_column(String(26), default=generate_ulid, primary_key=True)
+    id: Mapped[str] = mapped_column(String(26), default=gen_ulid, primary_key=True)
     created: Mapped[datetime] = mapped_column(insert_default=func.now())
     updated: Mapped[datetime] = mapped_column(insert_default=func.now(), onupdate=datetime.now)
 
@@ -34,9 +34,9 @@ class User(Base):
 
     def __init__(self, email: str, password: str):
         self.email = email
-        self.password = hash_password(password)
+        self.password = hash_pass(password)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.id}: {self.email}'
 
 
@@ -47,7 +47,7 @@ class Chain(Base):
     chain: Mapped[str]
     wallets: Mapped[list['Wallet']] = relationship(back_populates='chain')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.code}: {self.chain}'
 
 
@@ -62,7 +62,7 @@ class Wallet(Base):
     user: Mapped['User'] = relationship(back_populates='wallets')
     chain: Mapped['Chain'] = relationship(back_populates='wallets')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.address}: {self.user_id} - {self.chain}'
 
 
@@ -73,7 +73,7 @@ class Activate(Base):
     code: Mapped[str] = mapped_column(String(8))
     user: Mapped['User'] = relationship()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.user_id}: {self.code}'
 
 

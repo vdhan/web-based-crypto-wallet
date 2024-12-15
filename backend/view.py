@@ -1,7 +1,7 @@
 from flask import Response, jsonify, request
 
 from model import User, db
-from util import is_valid_email
+from util import is_email
 
 
 def signup() -> Response:
@@ -22,7 +22,7 @@ def signup() -> Response:
 
         return jsonify(res), 400
 
-    if not is_valid_email(str(email)):
+    if not is_email(str(email)):
         res = {
             'msg': 'Invalid email'
         }
