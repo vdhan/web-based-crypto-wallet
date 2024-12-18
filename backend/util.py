@@ -1,14 +1,16 @@
 import hashlib
 import os
+from pathlib import Path
 import re
 import secrets
+from datetime import datetime
 
 import bcrypt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import jwt
 from mnemonic import Mnemonic
 from pycardano import Address, HDWallet, Network, PaymentSigningKey, PaymentVerificationKey
-
-from model import Wallet
+from ulid import ULID
 
 
 def is_email(email: str) -> bool:
@@ -76,8 +78,35 @@ def gen_address(nemo: str) -> str:
     return address.encode()
 
 
-def add_wallet(password: str, salt: str, **kw) -> Wallet:
-    nemo = gen_mnemonic()
-    address = gen_address(nemo)
-    nemo, tag = encrypt(nemo, password, salt)
-    return Wallet(address=address, mnemonic=nemo, tag=tag, **kw)
+def gen_ulid() -> str:
+    return str(ULID())
+
+
+def gen_rsa_token(iss: str, sub: str, key_path: Path, duration: int = 86400) -> str:
+    with open(key_path) as f:
+        private_key = f.read()
+
+    current = datetime.now().timestamp()
+    payload = {
+        'iss': iss,
+        'sub': sub,
+        'jti': gen_ulid(),
+        'iat': current,
+        'exp': current + duration
+    }
+
+    token = jwt.encode(payload, private_key, 'RS256')
+    return token
+
+
+def decode_rsa_token(token: str, key_path: Path) -> dict:
+    with open(key_path) as f:
+        public_key = f.read()
+
+    try:
+        payload = jwt.decode(token, public_key, ['RS256'])
+        return payload
+    except jwt.InvalidTokenError:
+        return {'error': 'Invalid token'}
+    except jwt.ExpiredSignatureError:
+        return {'error': 'Token expired'}

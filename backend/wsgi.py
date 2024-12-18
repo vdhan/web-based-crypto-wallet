@@ -1,16 +1,14 @@
-import datetime as dt
 import os
+from pathlib import Path
 
 from flask import Flask
+from flask_migrate import Migrate
 
 from model import Chain, db
 
 
 def init_db() -> None:
     with app.app_context():
-        db.init_app(app)
-        db.create_all()
-
         chain = db.session.query(Chain).first()
         if not chain:
             chains = [
@@ -26,7 +24,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '')
 app.config['SALT'] = os.environ.get('SALT', '')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///wallet.db'
-app.config['TOKEN_DURATION'] = dt.timedelta(1)
+app.config['ISS'] = 'Crypto Wallet'
+app.config['BASE_DIR'] = Path(__file__).parent.parent
+
+db.init_app(app)
+migrate = Migrate(app, db)
 
 if __name__ == '__main__':
     import view
@@ -35,6 +37,7 @@ if __name__ == '__main__':
 
     app.add_url_rule('/signup', view_func=view.signup, methods=['POST'])
     app.add_url_rule('/login', view_func=view.login, methods=['POST'])
+    app.add_url_rule('/wallet/cardano', view_func=view.wallet_cardano)
 
     host = os.environ.get('HOST', '0.0.0.0')
     port = os.environ.get('PORT', 5000)

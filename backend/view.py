@@ -1,9 +1,17 @@
 from collections import OrderedDict
+from pathlib import Path
 from flask import Response, jsonify, request
 
-from model import Chain, User, db
-from util import add_wallet, check_pass, is_email
-from wsgi import app
+from model import Chain, User, Wallet
+from util import check_pass, decode_rsa_token, encrypt, gen_address, gen_mnemonic, gen_rsa_token, is_email
+from wsgi import app, db
+
+
+def add_wallet(password: str, salt: str, **kw) -> Wallet:
+    nemo = gen_mnemonic()
+    address = gen_address(nemo)
+    nemo, tag = encrypt(nemo, password, salt)
+    return Wallet(address=address, mnemonic=nemo, tag=tag, **kw)
 
 
 def signup() -> Response:
@@ -106,19 +114,76 @@ def login() -> Response:
 
         return jsonify(res), 400
 
-    wallets = []
-    for item in user.wallets:
-        wallet = OrderedDict([
-            ('chain', item.chain.chain),
-            ('address', item.address)
-        ])
-
-        wallets.append(wallet)
-
+    key_path: Path = app.config['BASE_DIR'] / 'key/private.pem'
+    token = gen_rsa_token(app.config['ISS'], user.id, key_path)
     res = OrderedDict([
-        ('id', user.id),
-        ('email', email),
-        ('wallets', wallets)
+        ('token', token)
     ])
 
     return jsonify(res)
+
+
+def wallet_cardano() -> Response:
+    auth_head = request.headers.get('Authorization')
+    if not auth_head:
+        res = OrderedDict([
+            ('msg', 'Missing token')
+        ])
+
+        return jsonify(res), 401
+
+    try:
+        key_path: Path = app.config['BASE_DIR'] / 'key/public.pem'
+        token = auth_head.split(' ')[1]
+        decoded = decode_rsa_token(token, key_path)
+        if 'error' in decoded:
+            res = OrderedDict([
+                ('msg', decoded['error'])
+            ])
+
+            return jsonify(res), 401
+
+        issue = decoded.get('iss', '')
+        if issue != app.config['ISS']:
+            res = OrderedDict([
+                ('msg', 'Invalid issuer')
+            ])
+
+            return jsonify(res), 401
+
+        sub = decoded.get('sub')
+        if not sub:
+            res = OrderedDict([
+                ('msg', 'Invalid user')
+            ])
+
+            return jsonify(res), 401
+
+        user = db.session.query(User).filter_by(id=sub, deleted=False).first()
+        if not user:
+            res = OrderedDict([
+                ('msg', 'User not existed')
+            ])
+
+            return jsonify(res), 401
+
+        wallets = []
+        for item in user.wallets:
+            wallet = OrderedDict([
+                ('chain', item.chain.chain),
+                ('address', item.address)
+            ])
+
+            wallets.append(wallet)
+
+        res = OrderedDict([
+            ('wallets', wallets)
+        ])
+
+        return jsonify(res)
+    except IndexError:
+        res = OrderedDict([
+            ('msg', 'Invalid Authorization header')
+        ])
+
+        return jsonify(res), 401

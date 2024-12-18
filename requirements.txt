@@ -5,3 +5,4 @@ bcrypt~=4.2
 python-ulid~=3.0
 Flask-SQLAlchemy~=3.1
 PyJWT~=2.10
+Flask-Migrate~=4.0.7
