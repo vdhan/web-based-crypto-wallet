@@ -15,17 +15,30 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-5. Generate `secret_key`:
+5. Generate `SECRET_KEY`:
 ```shell
 python -c 'import secrets; print(secrets.token_hex())'
 ```
 
-6. Create new file `.env` with content:
+6. Generate `SALT`:
 ```shell
-SECRET_KEY=secret_key
+python -c 'import secrets; print(secrets.token_hex(16))'
 ```
 
-7. Go to folder `ROOT_PROJECT/frontend`, then run:
+7. Create new file `.env` with content:
+```shell
+SECRET_KEY=SECRET_KEY
+SALT=SALT
+```
+
+8. Create folder `ROOT_PROJECT/key`, then go into it and generate RSA key:
+```shell
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+```
+
+
+9. Go to folder `ROOT_PROJECT/frontend`, then run:
 ```shell
 npm install
 ```
@@ -49,4 +62,3 @@ Leave the terminal open, too
 - Deploy on cloud (BizFly Cloud, Clearsky, etc.) for production.
 - Expand features (logging, etc.), make it become full fledged wallet.
 - Integrate multi chain for cross chain transaction.
-- Develop ecosystem: Layer-2, Payment Gateway, etc.

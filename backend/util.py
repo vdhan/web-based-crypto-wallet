@@ -67,9 +67,9 @@ def gen_mnemonic() -> str:
 
 
 def gen_address(nemo: str) -> str:
-    path = "m/1852'/1815'/0'/0/0"
+    PATH = "m/1852'/1815'/0'/0/0"
     hdwallet = HDWallet.from_mnemonic(nemo)
-    spend = hdwallet.derive_from_path(path)
+    spend = hdwallet.derive_from_path(PATH)
     sign_key: PaymentSigningKey = PaymentSigningKey.from_primitive(spend.public_key)
     verify_key = PaymentVerificationKey.from_signing_key(sign_key)
     address = Address(verify_key.hash(), network=Network.TESTNET)

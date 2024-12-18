@@ -2,7 +2,7 @@ import bcrypt
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from ulid import ULID
 
@@ -18,12 +18,19 @@ def hash_pass(password: str) -> str:
 
 
 class Base(DeclarativeBase):
+    pass
+
+
+class CommonModel:
     id: Mapped[str] = mapped_column(String(26), default=gen_ulid, primary_key=True)
-    created: Mapped[datetime] = mapped_column(insert_default=func.now())
-    updated: Mapped[datetime] = mapped_column(insert_default=func.now(), onupdate=datetime.now)
+    created: Mapped[datetime] = mapped_column(default=datetime.now)
 
 
-class User(Base):
+class UpdateModel:
+    updated: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
+
+
+class User(Base, CommonModel, UpdateModel):
     __tablename__ = 'users'
 
     email: Mapped[str] = mapped_column(unique=True)
@@ -40,7 +47,7 @@ class User(Base):
         return f'{self.id}: {self.email}'
 
 
-class Chain(Base):
+class Chain(Base, CommonModel, UpdateModel):
     __tablename__ = 'chains'
 
     code: Mapped[int] = mapped_column(unique=True)
@@ -51,7 +58,7 @@ class Chain(Base):
         return f'{self.code}: {self.chain}'
 
 
-class Wallet(Base):
+class Wallet(Base, CommonModel, UpdateModel):
     __tablename__ = 'wallets'
 
     address: Mapped[int] = mapped_column(unique=True)
@@ -66,7 +73,7 @@ class Wallet(Base):
         return f'{self.address}: {self.user_id} - {self.chain}'
 
 
-class Activate(Base):
+class Activate(Base, CommonModel):
     __tablename__ = 'activate'
 
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'))

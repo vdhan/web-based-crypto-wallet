@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 
 from flask import Flask
@@ -23,7 +24,9 @@ def init_db() -> None:
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '')
+app.config['SALT'] = os.environ.get('SALT', '')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///wallet.db'
+app.config['TOKEN_DURATION'] = dt.timedelta(1)
 
 if __name__ == '__main__':
     import view
@@ -32,7 +35,6 @@ if __name__ == '__main__':
 
     app.add_url_rule('/signup', view_func=view.signup, methods=['POST'])
     app.add_url_rule('/login', view_func=view.login, methods=['POST'])
-    app.add_url_rule('/wallet/cardano', view_func=view.manage_wallet, methods=['GET', 'POST', 'PUT', 'DELETE'])
 
     host = os.environ.get('HOST', '0.0.0.0')
     port = os.environ.get('PORT', 5000)
